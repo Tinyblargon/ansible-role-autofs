@@ -1,0 +1,211 @@
+---
+- name: Ensure AutoFS is installed
+  ansible.builtin.apt:
+    name: autofs
+    state: present
+    cache_valid_time: 900
+  become: true
+
+- name: Ensure AutoFS dirctory exists
+  ansible.builtin.file:
+    path: "{{ autofs_dir_mappings }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+# Due to autofs locking the directory the mountpoints are created in, we have to
+# first remove the changed mountpoints from the config before we can add/remove
+# the required folders.
+
+- name: Read file into variable
+  ansible.builtin.slurp:
+    src: "{{ autofs_mount_file }}"
+  register: autofs_config_files
+  loop: "{{ autofs_maps }}"
+  loop_control:
+    label: "{{ autofs_mount_file }}"
+  failed_when: false
+
+- name: Filter config files
+  ansible.builtin.set_fact:
+    autofs_matched_lines: >-
+      {{ autofs_matched_lines | default([]) +
+      [{'path': item.source | basename |
+      regex_replace(autofs_slash_substitute, '/'),
+      'strings': item.content | b64decode |
+      regex_findall('^(##.*)', multiline=True) |
+      map('regex_replace', '^(##)', '')}] }}
+  when: item.content is defined
+  loop: "{{ autofs_config_files.results }}"
+  loop_control:
+    label: >-
+      {{ item.invocation.module_args.src | basename |
+      regex_replace(autofs_slash_substitute, '/') }}
+
+- name: Build temporary config
+  ansible.builtin.set_fact:
+    autofs_temp_maps: >-
+      {{ autofs_temp_maps | default([]) +
+      [{'mountpoint': autofs_current_mount.mountpoint,
+      'options': autofs_current_mount.options if
+      autofs_current_mount.options is defined else omit,
+      'state': 'present' if not (autofs_current_mount.state is defined
+      and autofs_current_mount.state == 'absent')
+      and autofs_present_mounts | length > 0
+      and autofs_present_mounts | length == item.strings | length
+      and [] | difference(autofs_present_mounts) |
+      difference(item.strings) | length == 0
+      else 'absent'}] }}
+  vars:
+    autofs_current_mount: >-
+      {{ autofs_maps | selectattr('mountpoint', 'in', item.path) | first }}
+    autofs_present_mounts: >-
+      {{ (autofs_current_mount.mounts | rejectattr('state', 'defined') |
+      map(attribute='path') | list) +
+      (autofs_current_mount.mounts | selectattr('state', 'defined') |
+      selectattr('state', 'ne', 'absent') | map(attribute='path') | list) }}
+  loop: "{{ autofs_matched_lines }}"
+  loop_control:
+    label: "{{ item.path }}"
+
+- name: Temporarily remove changed mounts from config
+  ansible.builtin.template:
+    src: templates/etc_auto.master.j2
+    dest: /etc/auto.master
+    owner: "{{ omit }}"
+    group: "{{ omit }}"
+    mode: "{{ omit }}"
+  vars:
+    autofs_jinja_maps: "{{ autofs_temp_maps }}"
+  become: true
+  notify: Restart AutoFS
+  when: autofs_temp_maps_absent
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
+  when: autofs_temp_maps_absent
+
+- name: Check if mountpoints exists
+  ansible.builtin.stat:
+    path: "{{ autofs_path }}"
+  with_subelements:
+    - "{{ autofs_maps }}"
+    - mounts
+  loop_control:
+    label: "{{ autofs_path }}"
+  become: true
+  register: autofs_mountpoints
+
+- name: Remove mountpoints marked as absent
+  ansible.builtin.include_tasks:
+    file: absent_mountpoints.ansible.yml
+  when: >-
+    autofs_mountpoints.results | selectattr('stat.exists', 'defined') |
+    selectattr('stat.exists', 'eq', true) |
+    selectattr('item.0.state', 'defined') |
+    selectattr('item.0.state', 'eq', 'absent') | list | length > 0
+    or autofs_mountpoints.results | selectattr('stat.exists', 'defined') |
+    selectattr('stat.exists', 'eq', true) |
+    selectattr('item.1.state', 'defined') |
+    selectattr('item.1.state', 'eq', 'absent') | list | length > 0
+
+# From this point on we are only adding to the config.
+
+- name: Create mountpoints
+  ansible.builtin.file:
+    path: "{{ autofs_path_nested }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop: "{{ autofs_mountpoints.results }}"
+  loop_control:
+    label: "{{ autofs_path_nested }}"
+  become: true
+  when: autofs_path_nested_present
+
+- name: Make mountpoints immutable
+  ansible.builtin.file:
+    path: "{{ autofs_path_nested }}"
+    state: directory
+    attr: +i
+    mode: "{{ omit }}"
+  loop: "{{ autofs_mountpoints.results }}"
+  loop_control:
+    label: "{{ autofs_path_nested }}"
+  become: true
+  when: autofs_path_nested_present
+
+- name: Configure AutoFS default config
+  ansible.builtin.template:
+    src: templates/etc_default_autofs.j2
+    dest: /etc/default/autofs
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: Restart AutoFS
+
+- name: Configure AutoFS master config
+  ansible.builtin.template:
+    src: templates/etc_auto.master.j2
+    dest: /etc/auto.master
+    owner: root
+    group: root
+    mode: "0644"
+  vars:
+    autofs_jinja_maps: "{{ autofs_maps }}"
+  become: true
+  notify: Reload AutoFS
+
+- name: Configure AutoFS mappings
+  ansible.builtin.template:
+    src: templates/mapping.j2
+    dest: "{{ autofs_mount_file }}"
+    owner: root
+    group: root
+    mode: "0600"
+  loop: "{{ autofs_maps }}"
+  loop_control:
+    label: "{{ item.mountpoint }}"
+  when: >-
+    not (item.state is defined and item.state == 'absent')
+    and (item.mounts | selectattr('state', 'defined') |
+    selectattr('state', 'eq', 'absent') | list | length !=
+    item.mounts | list | length)
+  become: true
+  register: autofs_mapping_files
+  notify: Reload AutoFS
+
+- name: Ensure AutoFS is running and enabled
+  ansible.builtin.systemd:
+    name: autofs
+    state: started
+    enabled: true
+  become: true
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
+
+- name: Discover AutoFS files
+  ansible.builtin.find:
+    paths: "{{ autofs_dir_mappings }}"
+    recurse: true
+    patterns: '*'
+    excludes: >-
+      {{ autofs_mapping_files.results | map(attribute='dest') |
+      map('default', '') |
+      map('regex_replace', '^' + autofs_dir_mappings + '/', '') }}
+  become: true
+  register: autofs_files_to_delete
+
+- name: Remove unrefrenced files
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ autofs_files_to_delete.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+  become: true

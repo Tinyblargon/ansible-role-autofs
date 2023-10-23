@@ -1,0 +1,16 @@
+---
+- name: Check variables are correct
+  ansible.builtin.import_tasks:
+    file: assert.ansible.yml
+  run_once: true
+  delegate_to: localhost
+
+- name: Setup AutoFS
+  ansible.builtin.include_tasks:
+    file: present.ansible.yml
+  when: autofs_state == 'present'
+
+- name: Remove AutoFS
+  ansible.builtin.include_tasks:
+    file: absent.ansible.yml
+  when: autofs_state == 'absent'

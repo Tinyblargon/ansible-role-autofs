@@ -1,0 +1,16 @@
+---
+galaxy_info:
+  role_name: autofs
+  author: Tinyblargon
+  description: >-
+    Install and configure autofs. Creates and removes mountpoints as needed.
+  license: MIT
+  min_ansible_version: '2.14.1'
+  platforms:
+    - name: Debian
+      versions:
+        - bookworm
+  galaxy_tags:
+    - autofs
+    - mount
+    - mountpoints

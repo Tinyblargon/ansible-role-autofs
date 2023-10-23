@@ -1,0 +1,33 @@
+---
+- name: Check if mountpoint are empty
+  ansible.builtin.find:
+    paths: "{{ autofs_path_nested }}"
+    recurse: true
+  register: autofs_mountpoint_contents
+  loop: "{{ autofs_mountpoints.results }}"
+  loop_control:
+    label: "{{ autofs_path_nested }}"
+  become: true
+  when: autofs_path_nested_absent
+
+- name: Make mountpoint mutable
+  ansible.builtin.file:
+    path: "{{ autofs_mountpoint_contents_path }}"
+    state: directory
+    attr: -i
+    mode: "{{ omit }}"
+  loop: "{{ autofs_mountpoint_contents.results }}"
+  loop_control:
+    label: "{{ autofs_mountpoint_contents_path }}"
+  become: true
+  when: autofs_mountpoint_contents_when
+
+- name: Remove mountpoint
+  ansible.builtin.file:
+    path: "{{ autofs_mountpoint_contents_path }}"
+    state: absent
+  loop: "{{ autofs_mountpoint_contents.results }}"
+  loop_control:
+    label: "{{ autofs_mountpoint_contents_path }}"
+  become: true
+  when: autofs_mountpoint_contents_when

@@ -1,0 +1,6 @@
+---
+autofs_maps: []
+autofs_options: ""
+autofs_state: "present"
+autofs_use_misc_device: true
+autofs_slash_substitute: "~"

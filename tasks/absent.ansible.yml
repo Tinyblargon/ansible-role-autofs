@@ -1,0 +1,39 @@
+---
+- name: Esure AutoFS is not installed
+  ansible.builtin.apt:
+    name: autofs
+    state: absent
+
+- name: Ensure AutoFS config files are removed
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  vars:
+    autofs_files:
+      - /etc/autofs.conf
+      - "{{ autofs_dir_mappings }}"
+      - /etc/auto.master.d
+      - /etc/auto.master
+      - /etc/auto.misc
+      - /etc/auto.net
+      - /etc/auto.smb
+      - /etc/default/autofs
+      - /etc/init.d/autofs
+  loop: "{{ autofs_files }}"
+  become: true
+
+- name: Check if mountpoints exists
+  ansible.builtin.stat:
+    path: "{{ autofs_path }}"
+  with_subelements:
+    - "{{ autofs_maps }}"
+    - mounts
+  loop_control:
+    label: "{{ autofs_path }}"
+  become: true
+  register: autofs_mountpoints
+
+- name: Remove mountpoints
+  ansible.builtin.include_tasks:
+    file: absent_mountpoints.ansible.yml
+  when: autofs_mountpoints.results | length > 0

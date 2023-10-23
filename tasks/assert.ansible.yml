@@ -1,0 +1,96 @@
+---
+- name: Assert autofs_slash_substitute
+  ansible.builtin.assert:
+    that: >-
+      {{ autofs_slash_substitute is defined
+      and autofs_slash_substitute is string
+      and autofs_slash_substitute | length == 1 }}
+    quiet: true
+
+- name: Assert autofs_use_misc_device
+  ansible.builtin.assert:
+    that: >-
+      {{ autofs_use_misc_device is defined
+      and autofs_use_misc_device is boolean }}
+    quiet: true
+
+- name: Assert autofs_options
+  ansible.builtin.assert:
+    that: >-
+      {{ not autofs_options is defined
+      or (autofs_options is defined and autofs_options is string) }}
+    quiet: true
+
+- name: Assert autofs_state
+  ansible.builtin.assert:
+    that: >-
+      {{ not autofs_state is defined
+      or (autofs_state is defined and autofs_state is string
+      and autofs_state in ['present', 'absent']) }}
+    quiet: true
+
+- name: Assert autofs_maps is list
+  ansible.builtin.assert:
+    that: "{{ autofs_maps is iterable }}"
+    quiet: true
+  when: autofs_maps is defined
+
+- name: Assert autofs_maps required are set
+  ansible.builtin.assert:
+    that: >-
+      {{ item.mountpoint is defined
+      and item.mountpoint is string
+      and item.mountpoint is not none
+      and item.mounts is defined
+      and item.mounts is iterable
+      and item.mounts | length > 0 }}
+    quiet: true
+  loop: "{{ autofs_maps }}"
+  loop_control:
+    label: "{{ item.mountpoint }}"
+  when: autofs_maps is defined
+
+- name: Assert autofs_maps options
+  ansible.builtin.assert:
+    that: >-
+      {{ not item.options is defined
+      or (item.options is defined and item.options is string) }}
+    quiet: true
+  loop: "{{ autofs_maps }}"
+  loop_control:
+    label: "{{ item.mountpoint }}"
+  when: autofs_maps is defined
+
+- name: Assert autofs_maps state
+  ansible.builtin.assert:
+    that: >-
+      {{ not item.state is defined
+      or (item.state is defined and item.state is string
+      and item.state in ['present', 'absent']) }}
+    quiet: true
+  loop: "{{ autofs_maps }}"
+  loop_control:
+    label: "{{ item.mountpoint }}"
+  when: autofs_maps is defined
+
+- name: Assert named mountpoints have no nested paths
+  ansible.builtin.assert:
+    that: "{{ true if item.0.mountpoint == '/-' else not '/' in item.1.path }}"
+    quiet: true
+  with_subelements:
+    - "{{ autofs_maps }}"
+    - mounts
+  loop_control:
+    label: "{{ autofs_path }}"
+  when: autofs_maps is defined
+
+- name: "Assert mounts don't start with #"
+  ansible.builtin.assert:
+    that: "{{ not item.1.path.startswith('#') }}"
+    quiet: true
+  with_subelements:
+    - "{{ autofs_maps }}"
+    - mounts
+  loop_control:
+    label: "{{ autofs_path }}"
+  when: autofs_maps is defined

@@ -1,0 +1,19 @@
+# Ansible Managed
+
+#
+# Init system options
+#
+# If the kernel supports using the autofs miscellanous device
+# and you wish to use it you must set this configuration option
+# to "yes" otherwise it will not be used.
+#
+{% if autofs_use_misc_device %}
+USE_MISC_DEVICE="yes"
+{% endif %}
+#
+# Use OPTIONS to add automount(8) command line options that
+# will be used when the daemon is started.
+#
+{% if autofs_options != '' %}
+OPTIONS="{{ autofs_options }}"
+{% endif %}

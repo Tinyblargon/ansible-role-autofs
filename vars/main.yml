@@ -1,0 +1,32 @@
+---
+autofs_dir_mappings: "/etc/autofs.d"
+
+autofs_mount_file: >-
+  {{ autofs_dir_mappings + '/' + item.mountpoint |
+  replace('/', autofs_slash_substitute) }}
+
+autofs_path: >-
+  {{ item.0.mountpoint if item.0.mountpoint != '/-' and
+  item.0.mountpoint != '/' }}/{{ item.1.path }}
+autofs_path_nested: >-
+  {{ item.item.0.mountpoint if item.item.0.mountpoint != '/-' and
+  item.item.0.mountpoint != '/' }}/{{ item.item.1.path }}
+
+autofs_path_nested_absent: >-
+  {{ item.stat.exists is true
+  and (autofs_state == 'absent'
+  or (item.item.0.state is defined and item.item.0.state == 'absent')
+  or (item.item.1.state is defined and item.item.1.state == 'absent')) }}
+autofs_path_nested_present: >-
+  {{ item.stat.exists is false
+  and not (item.item.0.state is defined and item.item.0.state == 'absent')
+  and not (item.item.1.state is defined and item.item.1.state == 'absent') }}
+
+autofs_mountpoint_contents_path: >-
+  {{ item.item.invocation.module_args.path }}
+autofs_mountpoint_contents_when: >-
+  {{ not (item.skipped is defined and item.skipped == true) }}
+
+autofs_temp_maps_absent: >-
+  {{ autofs_temp_maps | selectattr('state', 'equalto', 'absent') | list |
+  length > 0 }}

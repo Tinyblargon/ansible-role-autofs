@@ -1,0 +1,13 @@
+# Ansible Managed
+
+{% for mount in item.mounts %}
+{% if 'state' not in mount or mount.state != 'absent' %}
+{{ mount.path }} {% if mount.options is defined %}{{ mount.options }} {% endif %}{{ mount.dest }}
+{% endif %}
+{% endfor %}
+
+{% for mount in item.mounts %}
+{% if 'state' not in mount or mount.state != 'absent' %}
+##{{ mount.path }}
+{% endif %}
+{% endfor %}

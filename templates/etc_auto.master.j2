@@ -1,0 +1,21 @@
+# Ansible Managed
+
+{% for mount in autofs_jinja_maps %}
+{% if mount.mounts is defined %}
+{% set ns = namespace(all_absent=true) %}
+{% for mount_info in mount.mounts %}
+{% if 'state' not in mount_info or mount_info.state != 'absent' %}
+{% set ns.all_absent = false %}
+{% endif %}
+{% endfor %}
+{% else %}
+{% set ns = namespace(all_absent=false) %}
+{% endif %}
+{% if not ns.all_absent and ('state' not in mount or mount.state != 'absent') %}
+{{ mount.mountpoint }} {{ autofs_dir_mappings + '/' + mount.mountpoint | replace('/', autofs_slash_substitute) }}{% if mount.options is defined %}{{ ' ' + mount.options }} {% endif %}
+
+{% endif %}
+{% endfor %}
+
++dir:/etc/auto.master.d
++auto.master
