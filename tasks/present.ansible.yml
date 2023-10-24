@@ -69,6 +69,7 @@
   loop: "{{ autofs_matched_lines }}"
   loop_control:
     label: "{{ item.path }}"
+  when: autofs_matched_lines is defined
 
 - name: Temporarily remove changed mounts from config
   ansible.builtin.template:
