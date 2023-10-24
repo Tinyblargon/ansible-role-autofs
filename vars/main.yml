@@ -28,5 +28,5 @@ autofs_mountpoint_contents_when: >-
   {{ not (item.skipped is defined and item.skipped == true) }}
 
 autofs_temp_maps_absent: >-
-  {{ autofs_temp_maps | selectattr('state', 'equalto', 'absent') | list |
-  length > 0 }}
+  {{ autofs_temp_maps is defined and autofs_temp_maps |
+  selectattr('state', 'equalto', 'absent') | list | length > 0 }}
