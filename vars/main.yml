@@ -6,11 +6,11 @@ autofs_mount_file: >-
   replace('/', autofs_slash_substitute) }}
 
 autofs_path: >-
-  {{ item.0.mountpoint if item.0.mountpoint != '/-' and
-  item.0.mountpoint != '/' }}/{{ item.1.path }}
+  {{ (item.0.mountpoint + '/' if item.0.mountpoint !='/-' else '')
+  + item.1.path }}
 autofs_path_nested: >-
-  {{ item.item.0.mountpoint if item.item.0.mountpoint != '/-' and
-  item.item.0.mountpoint != '/' }}/{{ item.item.1.path }}
+  {{ (item.item.0.mountpoint + '/' if item.item.0.mountpoint != '/-' else  '')
+  + item.item.1.path }}
 
 autofs_path_nested_absent: >-
   {{ item.stat.exists is true

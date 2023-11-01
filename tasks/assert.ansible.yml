@@ -84,6 +84,19 @@
     label: "{{ autofs_path }}"
   when: autofs_maps is defined
 
+- name: Assert unnamed are absolute paths
+  ansible.builtin.assert:
+    that: >-
+      {{ true if item.0.mountpoint != '/-' else
+      true if item.1.path | regex_search('^/[^/]+') != '' else false }}
+    quiet: true
+  with_subelements:
+    - "{{ autofs_maps }}"
+    - mounts
+  loop_control:
+    label: "{{ autofs_path }}"
+  when: autofs_maps is defined
+
 - name: "Assert mounts don't start with #"
   ansible.builtin.assert:
     that: "{{ not item.1.path.startswith('#') }}"

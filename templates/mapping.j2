@@ -2,7 +2,7 @@
 
 {% for mount in item.mounts %}
 {% if 'state' not in mount or mount.state != 'absent' %}
-{% if item.mountpoint == '/-' %}/{% endif%}{{ mount.path }} {% if mount.options is defined %}{{ mount.options }} {% endif %}{{ mount.dest }}
+{{ mount.path }} {% if mount.options is defined %}{{ mount.options }} {% endif %}{{ mount.dest }}
 {% endif %}
 {% endfor %}
 

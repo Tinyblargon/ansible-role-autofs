@@ -58,10 +58,10 @@ N/A
                 dest: "backup.example.com:/backup"
           - mountpoint: /-
             mounts:
-              - path: "var/www"
+              - path: "/var/www"
                 dest: "data.example.com:/www"
                 options: "-fstype=nfs4,r,soft,noexec"
-              - path: "root/opt"
+              - path: "/root/opt"
                 dest: "/opt/test"
                 options: "-fstype=bind"
         autofs_options: "--timeout 60"
