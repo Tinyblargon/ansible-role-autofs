@@ -47,7 +47,7 @@ N/A
 ```yaml
 - hosts: all
   roles:
-    - role: ansible-role-autofs
+    - role: Tinyblargon.autofs
       vars:
         autofs_maps:
           - mountpoint: /mnt
