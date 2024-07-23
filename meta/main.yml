@@ -1,6 +1,7 @@
 ---
 galaxy_info:
   role_name: autofs
+  namespace: tinyblargon
   author: Tinyblargon
   description: >-
     Install and configure autofs. Creates and removes mountpoints as needed.

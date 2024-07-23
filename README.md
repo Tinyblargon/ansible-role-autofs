@@ -47,7 +47,7 @@ N/A
 ```yaml
 - hosts: all
   roles:
-    - role: Tinyblargon.autofs
+    - role: tinyblargon.autofs
       vars:
         autofs_maps:
           - mountpoint: /mnt
