@@ -8,7 +8,7 @@ name: CI
 
 defaults:
   run:
-    working-directory: 'Tinyblargon.autofs'
+    working-directory: 'tinyblargon.autofs'
 
 jobs:
 
@@ -19,7 +19,7 @@ jobs:
       - name: Check out the codebase.
         uses: actions/checkout@v2
         with:
-          path: 'Tinyblargon.autofs'
+          path: 'tinyblargon.autofs'
 
       - name: Set up Python 3.
         uses: actions/setup-python@v2
