@@ -194,7 +194,7 @@
   ansible.builtin.find:
     paths: "{{ autofs_dir_mappings }}"
     recurse: true
-    patterns: '*'
+    patterns: "*"
     excludes: >-
       {{ autofs_mapping_files.results | map(attribute='dest') |
       map('default', '') |
