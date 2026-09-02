@@ -6,10 +6,11 @@ galaxy_info:
   description: >-
     Install and configure autofs. Creates and removes mountpoints as needed.
   license: MIT
-  min_ansible_version: '2.14.1'
+  min_ansible_version: "2.14.1"
   platforms:
     - name: Debian
       versions:
+        - trixie
         - bookworm
   galaxy_tags:
     - autofs
