@@ -41,7 +41,7 @@
   loop: "{{ autofs_config_files.results }}"
   loop_control:
     label: >-
-      {{ item.invocation.module_args.src | basename |
+      {{ item.source | basename |
       regex_replace(autofs_slash_substitute, '/') }}
 
 - name: Build temporary config
