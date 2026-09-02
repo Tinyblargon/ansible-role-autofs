@@ -23,7 +23,7 @@ autofs_path_nested_present: >-
   and not (item.item.1.state is defined and item.item.1.state == 'absent') }}
 
 autofs_mountpoint_contents_path: >-
-  {{ item.item.invocation.module_args.path }}
+  {{ item.item.stat.path }}
 autofs_mountpoint_contents_when: >-
   {{ not (item.skipped is defined and item.skipped == true) }}
 
