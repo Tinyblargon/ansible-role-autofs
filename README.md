@@ -16,7 +16,6 @@ N/A
 | autofs_options:         | string  | ""               | String of options, these options will be the default for all mountpoints.
 | autofs_state:           | string  | "present"        | When `"present"` autofs will be installed, configured and the mount point will be created. When `"absent"` autofs and its files and all specified mounts and mountpoints will be removed.
 | autofs_use_misc_device: | bool    | true             | If `true` `USE_MISC_DEVICE="yes"` in `default/autofs`.
-| autofs_slash_substitute:| string  | "~"              | Character to substitute with `/`. NOTE: don't change this if you already have mountpoints configured.
 
 ### Autofs_maps
 
