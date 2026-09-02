@@ -3,4 +3,5 @@ autofs_maps: []
 autofs_options: ""
 autofs_state: "present"
 autofs_use_misc_device: true
-autofs_slash_substitute: "~"
+
+autofs_slash_substitute: "~" # Character to substitute with `/`. NOTE: don't change this if you already have mountpoints configured.
